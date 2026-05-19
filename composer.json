@@ -1,7 +1,7 @@
 {
     "name": "madara-coder/laravel-esewa",
-    "description": "A simple Laravel package to integrate eSewa payment gateway",
-    "keywords": ["laravel", "esewa", "payment", "nepal", "gateway"],
+    "description": "A Laravel package to integrate eSewa payment gateway (V1 & V2)",
+    "keywords": ["laravel", "esewa", "payment", "nepal", "gateway", "v2", "hmac"],
     "type": "library",
     "license": "MIT",
     "authors": [
