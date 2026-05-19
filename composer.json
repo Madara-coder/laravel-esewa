@@ -1,0 +1,53 @@
+{
+    "name": "madara-coder/laravel-esewa",
+    "description": "A simple Laravel package to integrate eSewa payment gateway",
+    "keywords": ["laravel", "esewa", "payment", "nepal", "gateway"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Debrath Sharma",
+            "email": "debrathss@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/http": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^2.0|^3.0",
+        "orchestra/testbench": "^8.0|^9.0|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "MadaraCoder\\LaravelEsewa\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MadaraCoder\\LaravelEsewa\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "MadaraCoder\\LaravelEsewa\\LaravelEsewaServiceProvider"
+            ],
+            "aliases": {
+                "Esewa": "MadaraCoder\\LaravelEsewa\\Facades\\Esewa"
+            }
+        }
+    },
+    "scripts": {
+        "test": "./vendor/bin/pest",
+        "test:coverage": "./vendor/bin/pest --coverage"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
