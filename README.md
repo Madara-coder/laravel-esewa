@@ -185,4 +185,4 @@ MIT — feel free to use this in any project.
 
 ---
 
-**Made with ❤️ by [Debrath Sharma](https://github.com/Madara-coder)**
+**Made by [Debrath Sharma](https://github.com/Madara-coder)**
