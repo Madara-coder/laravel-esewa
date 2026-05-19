@@ -1,39 +1,43 @@
 <?php
 
+declare(strict_types=1);
+
 use MadaraCoder\LaravelEsewa\LaravelEsewa;
+use Illuminate\Support\Facades\Http;
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
 /**
- * Create a fresh LaravelEsewa instance with custom config.
+ * Create a fresh LaravelEsewa instance with the given config.
  */
-function esewa(string $env = 'Sandbox', string $scd = 'EPAYTEST'): LaravelEsewa
+function esewa(string $environment = 'Sandbox', string $merchantId = 'EPAYTEST'): LaravelEsewa
 {
-    config(['esewa.env' => $env, 'esewa.scd' => $scd]);
+    config(['esewa.env' => $environment, 'esewa.scd' => $merchantId]);
+
     return new LaravelEsewa();
 }
 
 // ─── esewaCheckout() ─────────────────────────────────────────────────────────
 
-describe('esewaCheckout()', function () {
+describe('esewaCheckout()', function (): void {
 
-    it('returns a string URL', function () {
+    it('returns a string URL', function (): void {
         $url = esewa()->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-001',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)->toBeString();
     });
 
-    it('points to the sandbox domain in Sandbox environment', function () {
-        $url = esewa(env: 'Sandbox')->esewaCheckout(
+    it('uses the sandbox domain in Sandbox environment', function (): void {
+        $url = esewa()->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-001',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)
@@ -41,12 +45,12 @@ describe('esewaCheckout()', function () {
             ->not->toContain('esewa.com.np/epay/main/?');
     });
 
-    it('points to the live domain in Live environment', function () {
-        $url = esewa(env: 'Live', scd: 'LIVE_MERCHANT_CODE')->esewaCheckout(
+    it('uses the live domain in Live environment', function (): void {
+        $url = esewa(environment: 'Live', merchantId: 'LIVE_SCD')->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-001',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)
@@ -54,45 +58,45 @@ describe('esewaCheckout()', function () {
             ->not->toContain('rc.esewa.com.np');
     });
 
-    it('includes the correct amount in the URL', function () {
-        $url = esewa()->esewaCheckout(
-            amount: 500,
-            order_id: 'ORDER-002',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
-        );
-
-        expect($url)->toContain('amt=500');
-    });
-
-    it('includes the order ID (pid) in the URL', function () {
+    it('includes the order ID as pid in the URL', function (): void {
         $url = esewa()->esewaCheckout(
             amount: 100,
-            order_id: 'MY-ORDER-999',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'MY-ORDER-999',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)->toContain('pid=MY-ORDER-999');
     });
 
-    it('includes the merchant ID (scd) in the URL', function () {
-        $url = esewa(scd: 'EPAYTEST')->esewaCheckout(
+    it('includes the merchant code as scd in the URL', function (): void {
+        $url = esewa()->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-003',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)->toContain('scd=EPAYTEST');
     });
 
-    it('includes the success and failure URLs', function () {
+    it('includes the base amount in the URL', function (): void {
+        $url = esewa()->esewaCheckout(
+            amount: 500,
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
+        );
+
+        expect($url)->toContain('amt=500');
+    });
+
+    it('includes the success and failure URLs', function (): void {
         $url = esewa()->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-004',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)
@@ -100,38 +104,38 @@ describe('esewaCheckout()', function () {
             ->toContain('fu=');
     });
 
-    it('calculates total amount (tAmt) correctly with all charges', function () {
+    it('calculates tAmt correctly with all charges', function (): void {
         $url = esewa()->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-005',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
-            tax_amount: 10,
-            service_charge: 5,
-            delivery_charge: 20,
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
+            taxAmount: 10,
+            serviceCharge: 5,
+            deliveryCharge: 20,
         );
 
         // tAmt = 100 + 10 + 5 + 20 = 135
         expect($url)->toContain('tAmt=135');
     });
 
-    it('sets tAmt equal to amount when no extra charges are given', function () {
+    it('sets tAmt equal to amount when no extra charges are provided', function (): void {
         $url = esewa()->esewaCheckout(
             amount: 250,
-            order_id: 'ORDER-006',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)->toContain('tAmt=250');
     });
 
-    it('defaults all optional charges to zero', function () {
+    it('defaults all optional charges to zero', function (): void {
         $url = esewa()->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-007',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)
@@ -140,15 +144,15 @@ describe('esewaCheckout()', function () {
             ->toContain('pdc=0');
     });
 
-    it('includes all individual charge parameters in the URL', function () {
+    it('includes all individual charge parameters correctly', function (): void {
         $url = esewa()->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-008',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
-            tax_amount: 8,
-            service_charge: 12,
-            delivery_charge: 30,
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
+            taxAmount: 8,
+            serviceCharge: 12,
+            deliveryCharge: 30,
         );
 
         expect($url)
@@ -159,115 +163,131 @@ describe('esewaCheckout()', function () {
             ->toContain('tAmt=150');
     });
 
-    it('throws an exception for an invalid environment', function () {
-        esewa(env: 'Production')->esewaCheckout(
+    it('throws an exception for an invalid environment', function (): void {
+        esewa(environment: 'Production')->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-009',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
     })->throws(\Exception::class, "Invalid eSewa environment");
 
-    it('throws an exception when merchant ID is empty', function () {
-        esewa(scd: '')->esewaCheckout(
+    it('throws an exception when merchant ID is empty', function (): void {
+        esewa(merchantId: '')->esewaCheckout(
             amount: 100,
-            order_id: 'ORDER-010',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
-    })->throws(\Exception::class, "eSewa merchant ID (SCD) is missing");
+    })->throws(\Exception::class, 'eSewa merchant ID (SCD) is missing');
 
 });
 
-// ─── verifyPayment() ──────────────────────────────────────────────────────────
+// ─── verifyPayment() ─────────────────────────────────────────────────────────
 
-describe('verifyPayment()', function () {
+describe('verifyPayment()', function (): void {
 
-    it('returns true when eSewa responds with Success', function () {
-        \Illuminate\Support\Facades\Http::fake([
-            'rc.esewa.com.np/epay/transrec' => \Illuminate\Support\Facades\Http::response(
+    it('returns true when eSewa responds with Success', function (): void {
+        Http::fake([
+            'rc.esewa.com.np/epay/transrec' => Http::response(
                 '<response>Success</response>',
                 200
             ),
         ]);
 
         $result = esewa()->verifyPayment(
-            oid: 'ORDER-001',
-            amt: 100,
-            refId: 'REF-ABC123',
+            orderId: 'ORDER-001',
+            amount: 100,
+            referenceId: 'REF-ABC123',
         );
 
         expect($result)->toBeTrue();
     });
 
-    it('returns false when eSewa responds with Failure', function () {
-        \Illuminate\Support\Facades\Http::fake([
-            'rc.esewa.com.np/epay/transrec' => \Illuminate\Support\Facades\Http::response(
+    it('returns false when eSewa responds with Failure', function (): void {
+        Http::fake([
+            'rc.esewa.com.np/epay/transrec' => Http::response(
                 '<response>Failure</response>',
                 200
             ),
         ]);
 
         $result = esewa()->verifyPayment(
-            oid: 'ORDER-001',
-            amt: 100,
-            refId: 'REF-INVALID',
+            orderId: 'ORDER-001',
+            amount: 100,
+            referenceId: 'REF-INVALID',
         );
 
         expect($result)->toBeFalse();
     });
 
-    it('calls the sandbox verify URL in Sandbox environment', function () {
-        \Illuminate\Support\Facades\Http::fake([
-            'rc.esewa.com.np/epay/transrec' => \Illuminate\Support\Facades\Http::response(
+    it('calls the sandbox verify URL in Sandbox environment', function (): void {
+        Http::fake([
+            'rc.esewa.com.np/epay/transrec' => Http::response(
                 '<response>Success</response>',
                 200
             ),
         ]);
 
-        esewa(env: 'Sandbox')->verifyPayment('ORDER-001', 100, 'REF-123');
+        esewa()->verifyPayment(
+            orderId: 'ORDER-001',
+            amount: 100,
+            referenceId: 'REF-123',
+        );
 
-        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
-            return str_contains($request->url(), 'rc.esewa.com.np/epay/transrec');
-        });
+        Http::assertSent(
+            fn ($request) => str_contains($request->url(), 'rc.esewa.com.np/epay/transrec')
+        );
     });
 
-    it('calls the live verify URL in Live environment', function () {
-        \Illuminate\Support\Facades\Http::fake([
-            'esewa.com.np/epay/transrec' => \Illuminate\Support\Facades\Http::response(
+    it('calls the live verify URL in Live environment', function (): void {
+        Http::fake([
+            'esewa.com.np/epay/transrec' => Http::response(
                 '<response>Success</response>',
                 200
             ),
         ]);
 
-        esewa(env: 'Live', scd: 'LIVE_SCD')->verifyPayment('ORDER-001', 100, 'REF-123');
+        esewa(environment: 'Live', merchantId: 'LIVE_SCD')->verifyPayment(
+            orderId: 'ORDER-001',
+            amount: 100,
+            referenceId: 'REF-123',
+        );
 
-        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
-            return str_contains($request->url(), 'esewa.com.np/epay/transrec')
-                && !str_contains($request->url(), 'rc.');
-        });
+        Http::assertSent(
+            fn ($request) => str_contains($request->url(), 'esewa.com.np/epay/transrec')
+                && ! str_contains($request->url(), 'rc.')
+        );
     });
 
-    it('sends the correct POST parameters to eSewa', function () {
-        \Illuminate\Support\Facades\Http::fake([
-            'rc.esewa.com.np/epay/transrec' => \Illuminate\Support\Facades\Http::response(
+    it('sends the correct POST parameters to eSewa', function (): void {
+        Http::fake([
+            'rc.esewa.com.np/epay/transrec' => Http::response(
                 '<response>Success</response>',
                 200
             ),
         ]);
 
-        esewa()->verifyPayment('ORDER-XYZ', 200.00, 'REF-XYZ');
+        esewa()->verifyPayment(
+            orderId: 'ORDER-XYZ',
+            amount: 200.00,
+            referenceId: 'REF-XYZ',
+        );
 
-        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
-            return $request['pid'] === 'ORDER-XYZ'
+        Http::assertSent(
+            fn ($request) => $request['pid'] === 'ORDER-XYZ'
                 && (float) $request['amt'] === 200.00
                 && $request['rid'] === 'REF-XYZ'
-                && $request['scd'] === 'EPAYTEST';
-        });
+                && $request['scd'] === 'EPAYTEST'
+        );
     });
 
-    it('throws an exception when merchant ID is empty', function () {
-        esewa(scd: '')->verifyPayment('ORDER-001', 100, 'REF-123');
-    })->throws(\Exception::class, "eSewa merchant ID (SCD) is missing");
+    it('throws an exception when merchant ID is empty', function (): void {
+        esewa(merchantId: '')->verifyPayment(
+            orderId: 'ORDER-001',
+            amount: 100,
+            referenceId: 'REF-123',
+        );
+    })->throws(\Exception::class, 'eSewa merchant ID (SCD) is missing');
 
 });

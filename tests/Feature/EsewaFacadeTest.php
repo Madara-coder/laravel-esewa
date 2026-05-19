@@ -1,18 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 use MadaraCoder\LaravelEsewa\Facades\Esewa;
 use Illuminate\Support\Facades\Http;
 
-// ─── Facade: esewaCheckout() ──────────────────────────────────────────────────
+// ─── Facade: esewaCheckout() ─────────────────────────────────────────────────
 
-describe('Esewa Facade - esewaCheckout()', function () {
+describe('Esewa Facade - esewaCheckout()', function (): void {
 
-    it('can generate a checkout URL via the Facade', function () {
+    it('generates a checkout URL via the Facade', function (): void {
         $url = Esewa::esewaCheckout(
             amount: 100,
-            order_id: 'FACADE-ORDER-001',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
+            orderId: 'FACADE-ORDER-001',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
         );
 
         expect($url)
@@ -22,15 +24,15 @@ describe('Esewa Facade - esewaCheckout()', function () {
             ->toContain('scd=EPAYTEST');
     });
 
-    it('calculates total correctly via the Facade', function () {
+    it('calculates total amount correctly via the Facade', function (): void {
         $url = Esewa::esewaCheckout(
             amount: 100,
-            order_id: 'FACADE-ORDER-002',
-            su: 'https://myapp.com/success',
-            fu: 'https://myapp.com/failure',
-            tax_amount: 5,
-            service_charge: 5,
-            delivery_charge: 10,
+            orderId: 'FACADE-ORDER-002',
+            successUrl: 'https://myapp.com/success',
+            failureUrl: 'https://myapp.com/failure',
+            taxAmount: 5,
+            serviceCharge: 5,
+            deliveryCharge: 10,
         );
 
         // tAmt = 100 + 5 + 5 + 10 = 120
@@ -41,9 +43,9 @@ describe('Esewa Facade - esewaCheckout()', function () {
 
 // ─── Facade: verifyPayment() ─────────────────────────────────────────────────
 
-describe('Esewa Facade - verifyPayment()', function () {
+describe('Esewa Facade - verifyPayment()', function (): void {
 
-    it('returns true for a successful payment via the Facade', function () {
+    it('returns true for a successful payment via the Facade', function (): void {
         Http::fake([
             'rc.esewa.com.np/epay/transrec' => Http::response(
                 '<response>Success</response>',
@@ -52,15 +54,15 @@ describe('Esewa Facade - verifyPayment()', function () {
         ]);
 
         $result = Esewa::verifyPayment(
-            oid: 'FACADE-ORDER-001',
-            amt: 100,
-            refId: 'REF-FACADE-123',
+            orderId: 'FACADE-ORDER-001',
+            amount: 100,
+            referenceId: 'REF-FACADE-123',
         );
 
         expect($result)->toBeTrue();
     });
 
-    it('returns false for a failed payment via the Facade', function () {
+    it('returns false for a failed payment via the Facade', function (): void {
         Http::fake([
             'rc.esewa.com.np/epay/transrec' => Http::response(
                 '<response>Failure</response>',
@@ -69,9 +71,9 @@ describe('Esewa Facade - verifyPayment()', function () {
         ]);
 
         $result = Esewa::verifyPayment(
-            oid: 'FACADE-ORDER-001',
-            amt: 100,
-            refId: 'REF-BAD',
+            orderId: 'FACADE-ORDER-001',
+            amount: 100,
+            referenceId: 'REF-BAD',
         );
 
         expect($result)->toBeFalse();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MadaraCoder\LaravelEsewa\Tests;
 
 use MadaraCoder\LaravelEsewa\LaravelEsewaServiceProvider;
@@ -19,7 +21,7 @@ class TestCase extends OrchestraTestCase
     }
 
     /**
-     * Set sensible default config values for every test.
+     * Set default config values for every test.
      * Individual tests can override these as needed.
      */
     protected function defineEnvironment($app): void
